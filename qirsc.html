@@ -357,6 +357,44 @@ tr.tot td{font-weight:800;color:var(--g700);border-top:1.5px solid var(--border)
 </head>
 <body>
 
+<!-- ═══ INDICADOR DE MODO OFFLINE (visível em toda tela, inclusive no gate) ═══ -->
+<div id="offline-status-badge" style="position:fixed;top:10px;right:10px;z-index:999999;font-family:system-ui,sans-serif;font-size:12px;font-weight:600;padding:7px 12px;border-radius:20px;box-shadow:0 2px 8px rgba(0,0,0,.25);color:#fff;background:#888;transition:background .3s;">
+  Verificando modo offline…
+</div>
+<script>
+(function(){
+  var badge = document.getElementById('offline-status-badge');
+  function setBadge(txt, cor){ if(badge){ badge.textContent = txt; badge.style.background = cor; } }
+
+  if(!('serviceWorker' in navigator)){
+    setBadge('⚠️ Navegador sem suporte a modo offline', '#b33');
+    return;
+  }
+
+  function verificar(){
+    navigator.serviceWorker.getRegistration().then(function(reg){
+      if(reg && (reg.active || reg.waiting || reg.installing)){
+        caches.open('qirsc-offline-v2').then(function(cache){
+          cache.match('./qirsc.html').then(function(hit){
+            if(hit){
+              setBadge('✅ Modo offline pronto', '#1a7a3c');
+            }else{
+              setBadge('⏳ Salvando para uso offline…', '#b8860b');
+              setTimeout(verificar, 1500);
+            }
+          });
+        });
+      }else{
+        setBadge('⚠️ Modo offline NÃO ativado — conecte à internet e recarregue', '#b33');
+      }
+    }).catch(function(){
+      setBadge('⚠️ Modo offline NÃO ativado — conecte à internet e recarregue', '#b33');
+    });
+  }
+  window.addEventListener('load', function(){ setTimeout(verificar, 1200); });
+})();
+</script>
+
 <!-- ═══ GATE DE ACESSO — TELA DE IDENTIFICAÇÃO ═══════════════════════════════ -->
 <div id="gate-overlay" style="position:fixed;inset:0;background:linear-gradient(135deg,var(--g800) 0%,var(--g700) 55%,var(--g600) 100%);z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;overflow-y:auto;">
   <div style="background:#fff;border-radius:18px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.35);overflow:hidden;">
